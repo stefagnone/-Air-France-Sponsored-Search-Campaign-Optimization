@@ -1,0 +1,1201 @@
+---
+title: "Business Challenge"
+output:
+  pdf_document: default
+  html_document: default
+date: "2024-02-25"
+team: Team9
+members: "-\"Stefano Compagnone\" -\"Mifue Hama\" -\"Verónica Hurtado\" -\"Tasuki
+  Ishizaki\""
+---
+
+## 1. Introduction =============================================================
+
+In an age where digital presence dictates market success, optimizing Search Engine Marketing (SEM) strategies is essential for competitive airlines like Air France (Apollo Digital, 2019). This project uses advanced data analytics to dissect SEM performance and carve out actionable strategies to enhance Air France's online engagement and bookings. Through the analysis of key performance indicators (KPIs), it will be revealed the strengths and weaknesses of various search engine publishers and identified a keyword strategy that resonates with potential customers.
+
+Identifying key KPIs is crucial for Air France to be able to effectively quantify the efficiency of advertising spending to revenue generation and enable a strategic approach to maximize returns. Such an analytical focus is essential for deploying the marketing budget most effectively, ensuring that each dollar spent contributes to the highest possible return. Understanding the impact of campaign changes on these KPIs is crucial for refining Air France's SEM strategy and achieving efficient ad spend that maximizes revenue. For instance, increasing impressions or managing cost per click more effectively directly contributes to improvements in ROI (QLIK, n.d.).
+
+Here, adding the new columns of "ROI" (Return On Investment) and "Amount per booking" to the existing data set is done for the following explanation.
+
+ROI is a marketing metric that measures the efficacy of a digital advertising campaign. It is calculated by dividing the revenue generated from advertising by the cost of that advertising. In the context of this data, Revenue is represented as "Amount," and Cost is denoted as "Total Cost." The reason for identifying Revenue as "Amount" is due to the strong positive relationship with the Total Volume of Bookings (0.994).This relationship is foundational in business analysis, aligning with the well-established principle that as sales volume increases, revenue typically follows suit, underscoring the direct correlation between the number of units sold and revenue generated(Economist, 2023).
+
+Average amount per booking likely refers to the average revenue amount received for each booking. It is calculated by dividing the total amount of revenue (Amount) by the total volume of bookings.
+
+```{r}
+# Set path to retrieve files
+getwd()
+setwd("C:/Users/fmb10/OneDrive")
+
+# Loading necessary libraries
+library(dplyr)
+library(readxl)
+library(ggplot2)
+
+# Retrieving excel files.
+data <- read_excel("case_data.xlsx", sheet = "training_data")
+
+# Creating new columns
+
+# Adding "ROI" column 
+new_col_name <- "ROI"
+data <- data %>%
+  mutate(!!new_col_name := `Amount` / `Total Cost`)
+
+# Adding "Amount per booking" column
+new_col_name <- "Amount per booking"
+data <- data %>%
+  mutate(!!new_col_name := `Amount` / `Total Volume of Bookings`)
+
+# Replacing columns with Nan of "Amount per booking" with "0"
+data <- data %>%
+  mutate(`Amount per booking` = replace(`Amount per booking`, 
+                                        is.nan(`Amount per booking`), 0))
+
+
+head(data)
+
+```
+
+### Determine KPIs
+
+**The most important KPIs are as follows (Descending order by correlation):**
+
+1.  Transaction Conversion Rate (CVR)
+
+2.  Amount per booking
+
+3.  Cost per Click (CPC)
+
+4.  Engine Click Through Rate (CTR)
+
+5.  Impressions
+
+#### Logic Tree that constitutes the ROI
+
+The goal of Air France's SEM strategy is to optimize ROI as mentioned above. Optimization here involves focusing on effective elements and improving or addressing less effective ones. In simpler terms, it means concentrating efforts on areas where ROI is high.
+
+The logic tree of ROI is illustrated like below.
+
+As the tree and the ROI formula illustrate, to increase ROI, one must either increase Revenue or decrease Costs. The five KPIs determined are highlited with blue of this logic tree. Therefore, optimizing ROI means aiming for a high Amount per booking, high Impressions, a high CVR, a high CTR, and a low CPC.
+
+```{r}
+# Output1: Logic Tree that constitutes the ROI
+
+# If the package "DiagrammeR" is not installed, please install it
+# install.packages("DiagrammeR")
+library(DiagrammeR)
+
+# Logic Tree Definition
+graph <- grViz("
+digraph logic_tree {
+
+  # Define node attributes
+  node [fontname = Helvetica, shape = box]
+  
+  Cost_per_Click [style=filled, color=lightskyblue]
+  Amount_per_booking [style=filled, color=lightskyblue]
+  Trans_Conv_Percentage [style=filled, color=lightskyblue]
+  Impressions [style=filled, color=lightskyblue]
+  Engine_Click_Thru_Percentage [style=filled, color=lightskyblue]
+  
+  
+  # Logic Tree Structure
+  ROI -> Cost
+  ROI -> Amount
+  
+  Cost -> Cost_per_Click
+  Cost -> Click
+  
+  Amount -> Amount_per_booking
+  Amount -> Number_of_Bookings
+  
+  Number_of_Bookings -> Trans_Conv_Percentage
+  Number_of_Bookings -> Clicks
+  
+  Clicks -> Impressions
+  Clicks -> Engine_Click_Thru_Percentage 
+  
+  
+}
+")
+
+# Logic Tree Display
+graph
+
+
+```
+
+#### Scatter plot of Amount per booking vs ROI
+
+The scatter plot suggests a relationship between the amount per booking and ROI, with a correlation coefficient, 'r', of 0.19126, indicating a potential connection. The concentration of data points near the origin could imply that the amount per booking does not solely determine ROI. While there are outliers with higher ROI and booking amounts, their presence suggests that factors other than booking amount might also significantly influence ROI. The distribution of ROI across various booking amounts shows variability, but it does not dismiss the possibility of a positive effect of higher booking amounts on ROI. The plot, therefore, supports the consideration of booking amount as one of the factors in optimizing ROI.
+
+```{r}
+# Output2: Scatter plot of Amount per booking vs ROI
+
+x <- data$`Amount per booking`
+y <- data$`ROI`
+x_title <- "Amount per booking"
+y_title <- "ROI"
+Title <- "Scatter plot of Amount per booking vs ROI"
+
+# Calculating correlation coefficient
+correlation <- cor(x, y, use = "complete.obs")
+
+# Creating scatter plot
+ggplot(data, aes(x = x, y = y)) +
+  geom_point() +
+  labs(title = Title,
+       x = x_title,
+       y = y_title)+
+  annotate("text", x = Inf, y = Inf, label = paste("r =", round(correlation, 5)), 
+           hjust = 1.1, vjust = 1.1, size = 5, color = "red")
+```
+
+#### Scatter plot of Impressions vs ROI
+
+The scatter plot presents the relationship between the number of impressions and ROI, denoted by a correlation coefficient, 'r', of -0.00111. This 'r' value suggests a subtle correlation where the number of impressions does not appear to be a strong predictor of ROI. Most data points gather at the lower range of impressions, hinting that the ROI is often lower where there are fewer impressions. Some outliers with higher ROI exist independently of the number of impressions, pointing to the possibility that additional variables could be at play in determining ROI. The overall pattern observed in the plot indicates a complex relationship between impressions and ROI, where impressions are one of many factors to consider.
+
+```{r}
+# Output3: Scatter plot of Impressions vs ROI
+
+x <- data$`Impressions`
+y <- data$`ROI`
+x_title <- "Impressions"
+y_title <- "ROI"
+Title <- "Scatter plot of Impressions vs ROI"
+
+# Calculating correlation coefficient
+correlation <- cor(x, y, use = "complete.obs")
+
+# Creating scatter plot
+ggplot(data, aes(x = x, y = y)) +
+  geom_point() +
+  labs(title = Title,
+       x = x_title,
+       y = y_title)+
+  annotate("text", x = Inf, y = Inf, label = paste("r =", round(correlation, 5)), 
+           hjust = 1.1, vjust = 1.1, size = 5, color = "red")
+```
+
+#### Scatter plot of Engine Click Thru % vs ROI
+
+The scatter plot presents the relationship between Engine Click Through Percentage and ROI with a correlation coefficient 'r' of 0.00042. This 'r' value suggests a slight, almost imperceptible connection between click-through rates from a publisher ad and the resulting ROI. Most of the data points are grouped towards the lower end of the ROI scale, which may indicate that the click-through rate is not the sole driver of ROI. Some data points are higher, indicating instances of higher ROI that may be due to a combination of factors beyond just the click-through percentage. The plot acknowledges the complexity of predicting ROI, where click-through percentage is one of many contributing elements.
+
+```{r}
+# Output4: Scatter plot of Engine Click Thru % vs ROI
+
+x <- data$`Engine Click Thru %`
+y <- data$`ROI`
+x_title <- "Engine Click Thru %"
+y_title <- "ROI"
+Title <- "Scatter plot of Engine Click Thru % vs ROI"
+
+# Calculating correlation coefficient
+correlation <- cor(x, y, use = "complete.obs")
+
+# Creating scatter plot
+ggplot(data, aes(x = x, y = y)) +
+  geom_point() +
+  labs(title = Title,
+       x = x_title,
+       y = y_title)+
+  annotate("text", x = Inf, y = Inf, label = paste("r =", round(correlation, 5)), 
+           hjust = 1.1, vjust = 1.1, size = 5, color = "red")
+```
+
+#### Scatter plot of Trans. Conv. % vs ROI
+
+The scatter plot shows the relationship between transaction conversion percentage and ROI, with a correlation coefficient 'r' of 0.86018. This 'r' value shows a strong positive link, meaning as the conversion percentage goes up, so does the ROI. Most data points cluster at the lower end of the conversion percentage, which also have lower ROI values. A few points are scattered at higher conversion percentages with varying ROI, suggesting some level of inconsistency. Overall, the plot suggests a good chance that higher conversion rates could lead to better ROI.
+
+```{r}
+# Output5: Scatter plot of Trans. Conv. % vs ROI
+
+x <- data$`Trans. Conv. %`
+y <- data$`ROI`
+x_title <- "Trans. Conv. %"
+y_title <- "ROI"
+Title <- "Scatter plot of Trans. Conv. % vs ROI"
+
+# Calculating correlation coefficient
+correlation <- cor(x, y, use = "complete.obs")
+
+# Creating scatter plot
+ggplot(data, aes(x = x, y = y)) +
+  geom_point() +
+  labs(title = Title,
+       x = x_title,
+       y = y_title)+
+  annotate("text", x = Inf, y = Inf, label = paste("r =", round(correlation, 5)), 
+           hjust = 1.1, vjust = 1.1, size = 5, color = "red")
+```
+
+#### Scatter plot of Avg. Cost per Click vs ROI
+
+The scatter plot presents the relationship between the average cost per click and ROI, indicated by a correlation coefficient 'r' of -0.03116. Although this 'r' value is minimal, it leaves open the possibility of a subtle relationship between cost per click and ROI. The concentration of data points towards the lower end of the cost scale corresponds with a wide range of ROI outcomes. Occasional higher cost per click values appear without a consistent effect on ROI, suggesting that cost per click may be one of many variables in the ROI equation. The pattern observed does not rule out the average cost per click as a potential consideration in the broader context of ROI strategies.
+
+```{r}
+# Output6: Scatter plot of Avg. Cost per Click vs ROI
+
+x <- data$`Avg. Cost per Click`
+y <- data$`ROI`
+x_title <- "Avg. Cost per Click"
+y_title <- "ROI"
+Title <- "Scatter plot of Avg. Cost per Click vs ROI"
+
+# Calculating correlation coefficient
+correlation <- cor(x, y, use = "complete.obs")
+
+# Creating scatter plot
+ggplot(data, aes(x = x, y = y)) +
+  geom_point() +
+  labs(title = Title,
+       x = x_title,
+       y = y_title)+
+  annotate("text", x = Inf, y = Inf, label = paste("r =", round(correlation, 5)), 
+           hjust = 1.1, vjust = 1.1, size = 5, color = "red")
+```
+
+In the following actionable insights section, strategies based on these KPIs, including publishers strategy and keyword strategy, will be presented.
+
+## 2. Actionable Insights ======================================================
+
+Insight 1. Identification of the best KPIs for each publisher and the future SEM campaign structure
+
+Insight 2. The most optimal campaign strategy for each publisher
+
+Insight 3. Keyword strategy for each publisher and campaign
+
+Note: In the analysis, "Averages" are used for the KPIs to normalize data, making it easier to compare different datasets on a similar scale.
+
+### Insights 1: The best KPIs by publisher and The future SEM campaign structure ===================
+
+The analysis has uncovered that a strategy tailored to each search publisher should be developed, leveraging the strengths of each platform while addressing their weaknesses. This is because when comparing the KPIs, which were identified in the Insight 1, across publishers, it is evident that KPIs differ significantly by search publisher, indicating that each search publisher publisher interacts with campaigns in a unique way.
+
+A failure to consider these differences can lead to a high likelihood of inefficiency with a uniform strategy. According to the quote, "A uniform strategy equates the prices of an individual product across all stores (Montgomery, 2024)," This allows us to define a uniform strategy in SEM as setting the same budget and using the same keywords and bidding strategies across various platforms, such as Google Ads, Bing Ads, and Yahoo Search Ads. Applying this strategy to a situation where the differences in KPIs across publishers would result in inefficient budget allocation, missing audience targeting opportunities, and so forth (Marino, 2023).
+
+**The best KPIs for each publisher:**
+
+Google Global - Amount per booking
+
+Google US - Engine Click Through(%)
+
+MSN Global - Transaction Conversion(%)
+
+MSN US - Transaction Conversion(%)
+
+Overture Global - Impressions
+
+Overture US - Cost per Click
+
+Yahoo US - Transaction Conversion(%)
+
+Additionally, future Search Engine Marketing (SEM) campaigns should be structured to leverage both traditional publishers and metasearch companies effectively. Kayak's exceptional performance in terms of both high booking values and low costs per click identified from the analysis below indicates that metasearch companies can offer a high return on investment. Therefore, Air France should consider diversifying their SEM campaigns to include metasearch companies like Kayak. This could not only provide a more cost-effective approach due to lower CPCs but also tap into a different customer base that may not be fully reached by traditional publishers (Alam, 2023).
+
+#### 1.1 Average Amount per Booking by Publisher
+
+As the chart below shows, "Kayak" has significantly outperformed all other publishers with an extraordinary average booking amount of \$1,123.53, which far exceeds the updated overall average excluding Kayak, which is \$75.08.
+
+Other than Kayak, "Google - Global" stands out with the highest average booking amount at \$205.98, exceeding the overall average of \$75.08. "MSN - Global" also surpasses the average with an average booking value of \$102.65. On the other end of the spectrum, "Google - US" has an average booking amount of \$54.59 and "Yahoo - US" comes in at \$61.91, all of which are below the overall average.The standout publisher, "Google - Global," is the most significant in terms of average booking value, marking it as a key platform for Air France to consider. To leverage this for an increase in KPIs, Air France might focus on enhancing their investment with "Google - Global". It also can aim to understand and apply the successful strategies from this platform to other publishers to improve their average booking values.
+
+```{r}
+# Output7: 1.1 Average Amount per Booking by Publisher
+
+x <- data$`Publisher Name`
+y <- data$`Amount per booking`
+x_title <- "Publisher Name"
+y_title <- "Average Amount per booking"
+Title <- "Average Amount per Booking by Publisher"
+
+# Group by 'Publisher Name' and calculate average of 'Amount per booking'
+publisher_averages <- data %>%
+  group_by(`Publisher Name`) %>%
+  summarise(Average = mean(`Amount per booking`, na.rm = TRUE))
+
+# Adding Kayak average data
+kayak_average <- tibble(`Publisher Name` = "Kayak", Average = 1123.528846)
+# Adding 'kayak_average' to 'publisher_averages'
+publisher_averages <- bind_rows(publisher_averages, kayak_average)
+
+
+# Bar graph of averages by 'Publisher Name'
+p <- ggplot(publisher_averages, aes(x = `Publisher Name`, y = Average)) +
+  geom_bar(stat = "identity", fill = "grey") +
+  geom_text(aes(label = round(Average, 2)), vjust = -0.5, color = "black")+
+  labs(title = Title, 
+       x = x_title, 
+       y = y_title)
+
+# Calculate the average of the overall 'Amount per booking'
+overall_average <- mean(y, na.rm = TRUE)
+
+# Add overall average to bar graph
+p <- p + geom_hline(yintercept = overall_average, linetype = "dashed", color = "red") +
+  annotate("text", x = Inf, y = overall_average+50, 
+           label = paste("Overall average excluding Kayak:", round(overall_average, 2)), 
+           hjust = 1.1, vjust = -0.5, color = "red")
+
+# Display bar graph
+print(p)
+
+
+```
+
+#### 1.2 Average Impressions by Publisher
+
+From the chart depicting average impressions by publisher below, "Overture - Global" exhibits the highest average at 32,318.5 impressions, which is considerably above the overall average of 8,929.18. Following closely is "Overture - US" with 24,179.96 impressions, also well over the average. Contrarily, "Yahoo - US" and "MSN - US" register much lower averages of 1,487.48 and 1,769.47 impressions respectively, both falling below the overall average. The prominence of "Overture - Global" in terms of average impressions suggests it may be a valuable platform for Air France to prioritize. By concentrating their efforts and possibly increasing their presence on "Overture - Global," Air France could potentially amplify their visibility and improve key performance indicators related to impressions. Additionally, understanding the effective tactics used by "Overture - Global" could provide insights that Air France might apply to other publishers to enhance their impression counts.
+
+```{r}
+# Output8: 1.2 Average Impressions by Publisher
+
+x <- data$`Publisher Name`
+y <- data$`Impressions`
+x_title <- "Publisher Name"
+y_title <- "Average Impressions"
+Title <- "Average Impressions by Publisher"
+
+# Group by 'Publisher Name' and calculate average of 'Impressions'
+publisher_averages <- data %>%
+  group_by(`Publisher Name`) %>%
+  summarise(Average = mean(`Impressions`, na.rm = TRUE))
+
+# Bar graph of averages by 'Publisher Name'
+p <- ggplot(publisher_averages, aes(x = `Publisher Name`, y = Average)) +
+  geom_bar(stat = "identity", fill = "grey") +
+  geom_text(aes(label = round(Average, 2)), vjust = -0.5, color = "black")+
+  labs(title = Title, 
+       x = x_title, 
+       y = y_title)
+
+# Calculate the average of the overall 'Impressions'
+overall_average <- mean(y, na.rm = TRUE)
+
+# Add overall average to bar graph
+p <- p + geom_hline(yintercept = overall_average, linetype = "dashed", color = "red") +
+  annotate("text", x = Inf, y = overall_average, 
+           label = paste("Overall Average:", round(overall_average, 2)), 
+           hjust = 1.1, vjust = -0.5, color = "red")
+
+# Display bar graph
+print(p)
+
+
+```
+
+#### 1.3 Average Engine Click Thru rate by Publisher
+
+In the chart illustrating the Average Engine Click Through Rate by Publisher, "Yahoo - US" outperforms all with a rate of 16.08, surpassing the overall average of 11.2. "Google - US" also exceeds the average with a click through rate of 15.16. In contrast, "Overture - Global" and "Overture - US" are below the average with rates of 3.57 and 2.66 respectively. The remarkable performance of "Yahoo - US" suggests it could be an advantageous platform for Air France to target for enhanced click-through rates. By investing more into the high-performing "Yahoo - US" and analyzing the strategies that lead to its success, Air France can be able to optimize their click-through rates across various publishers.
+
+```{r}
+# Output9: 1.3 Average Engine Click Thru rate by Publisher
+
+x <- data$`Publisher Name`
+y <- data$`Engine Click Thru %`
+x_title <- "Publisher Name"
+y_title <- "Average Engine Click Thru rate"
+Title <- "Average Engine Click Thru rate by Publisher"
+
+# Group by 'Publisher Name' and calculate average of 'Engine Click Thru rate'
+publisher_averages <- data %>%
+  group_by(`Publisher Name`) %>%
+  summarise(Average = mean(`Engine Click Thru %`, na.rm = TRUE))
+
+# Bar graph of averages by 'Publisher Name'
+p <- ggplot(publisher_averages, aes(x = `Publisher Name`, y = Average)) +
+  geom_bar(stat = "identity", fill = "grey") +
+  geom_text(aes(label = round(Average, 2)), vjust = -0.5, color = "black")+
+  labs(title = Title, 
+       x = x_title, 
+       y = y_title)
+
+# Calculate the average of the overall 'Engine Click Thru rate'
+overall_average <- mean(y, na.rm = TRUE)
+
+# Add overall average to bar graph
+p <- p + geom_hline(yintercept = overall_average, linetype = "dashed", color = "red") +
+  annotate("text", x = Inf, y = overall_average, 
+           label = paste("Overall Average:", round(overall_average, 2)), 
+           hjust = 1.1, vjust = -0.5, color = "red")
+
+# Display bar graph
+print(p)
+
+
+```
+
+#### 1.4 Average Trans. Conv. rate by Publisher
+
+For the chart titled "Average Trans. Conv. rate by Publisher," "Yahoo - US" again outperforms with the highest transaction conversion rate of 1.84. This is substantially higher than the overall average of 0.53. "MSN - Global" also exceeds the average with a conversion rate of 1.15. Meanwhile, "Overture - Global" and "Overture - US" are below the average with rates of 0.2 and 0.09, respectively. These metrics suggest that "Yahoo - US" could be a particularly valuable platform for converting impressions into transactions for Air France. Concentrating on "Yahoo - US" could be beneficial for Air France in terms of enhancing their transaction conversion rates, and investigating the factors contributing to "Yahoo - US"'s success could provide actionable strategies for other publishers.
+
+```{r}
+# Output10: 1.4 Average Trans. Conv. rate by Publisher
+
+x <- data$`Publisher Name`
+y <- data$`Trans. Conv. %`
+x_title <- "Publisher Name"
+y_title <- "Average Trans. Conv. rate"
+Title <- "Average Trans. Conv. rate by Publisher"
+
+# Group by 'Publisher Name' and calculate average of 'Trans. Conv. rate'
+publisher_averages <- data %>%
+  group_by(`Publisher Name`) %>%
+  summarise(Average = mean(`Trans. Conv. %`, na.rm = TRUE))
+
+# Bar graph of averages by 'Publisher Name'
+p <- ggplot(publisher_averages, aes(x = `Publisher Name`, y = Average)) +
+  geom_bar(stat = "identity", fill = "grey") +
+  geom_text(aes(label = round(Average, 2)), vjust = -0.5, color = "black")+
+  labs(title = Title, 
+       x = x_title, 
+       y = y_title)
+
+# Calculate the average of the overall 'Trans. Conv. rate'
+overall_average <- mean(y, na.rm = TRUE)
+
+# Add overall average to bar graph
+p <- p + geom_hline(yintercept = overall_average, linetype = "dashed", color = "red") +
+  annotate("text", x = Inf, y = overall_average, 
+           label = paste("Overall Average:", round(overall_average, 2)), 
+           hjust = 1.1, vjust = -0.5, color = "red")
+
+# Display bar graph
+print(p)
+
+
+```
+
+#### 1.5 Average Avg. Cost per Click by Publisher
+
+In the chart illustrating the "Average Cost per Click by Publisher," "Overture - US" and "Overture - Global" stand out as the most cost-effective options with the lowest costs per click at \$0.76 and \$0.81 respectively, well below the overall average of \$1.89. Conversely, "MSN - Global" incurs the highest cost at \$2.82 per click. This is followed closely by "Google - US" and "Google - Global" at \$2.39 and \$2.23, which are notably above the average. For Air France, prioritizing publishers like "Overture - US" and "Overture - Global" could be a strategic move to minimize costs when they focus on this metric. Conversely, the more expensive clicks from "MSN - Global," "Google - US," and "Google - Global" might necessitate a more thorough analysis to ensure that the higher costs are justified by corresponding value in terms of conversion rates or other important performance metrics.
+
+Additionally, Kayak emerges with a notably low average cost per click of \$1.26, which is well under the overall average of \$1.89.
+
+```{r}
+# Output11: 1.5 Average Cost per Click by Publisher
+
+x <- data$`Publisher Name`
+y <- data$`Avg. Cost per Click`
+x_title <- "Publisher Name"
+y_title <- "Average Cost per Click"
+Title <- "Average Cost per Click by Publisher"
+
+# Group by 'Publisher Name' and calculate average of 'Cost per Click'
+publisher_averages <- data %>%
+  group_by(`Publisher Name`) %>%
+  summarise(Average = mean(`Avg. Cost per Click`, na.rm = TRUE))
+
+# Adding Kayak average data
+kayak_average <- tibble(`Publisher Name` = "Kayak", Average = 1.256475343)
+# Adding 'kayak_average' to 'publisher_averages'
+publisher_averages <- bind_rows(publisher_averages, kayak_average)
+
+# Bar graph of averages by 'Publisher Name'
+p <- ggplot(publisher_averages, aes(x = `Publisher Name`, y = Average)) +
+  geom_bar(stat = "identity", fill = "grey") +
+  geom_text(aes(label = round(Average, 2)), vjust = -0.5, color = "black")+
+  labs(title = Title, 
+       x = x_title, 
+       y = y_title)
+
+# Calculate the average of the overall 'Cost per Click'
+overall_average <- mean(y, na.rm = TRUE)
+
+# Add overall average to bar graph
+p <- p + geom_hline(yintercept = overall_average, linetype = "dashed", color = "red") +
+  annotate("text", x = Inf, y = overall_average-0.2, 
+           label = paste("Overall average excluding Kayak:", round(overall_average, 2)), 
+           hjust = 1.1, vjust = -0.5, color = "red")
+
+# Display bar graph
+print(p)
+
+
+```
+
+### Insights 2: The campaign strategy by publisher ===================
+
+Identifying the most effective campaign by a publisher for Air France is crucial as it directly impacts the return on advertising spend. Stakeholders should care because pinpointing the best-performing campaign enables smarter budget allocation, strategic planning, and focused marketing efforts, ensuring that every dollar spent is an investment towards the most lucrative outcomes. The actionable value in this insight is that it allows for informed decisions to optimize advertising strategies, refine targeting, and improve the overall efficiency of marketing campaigns, ultimately driving up profitability and brand success for Air France (Zagrodska, 2023).
+
+Note: "Overture - Global" and "Overture - US" are not included to this insight since all the campaign of them are "unassigned".
+
+#### 2.1 Average of KPIs for campaign 'Air France Brand & French Destinations' in 'Google Global' data
+
+The table displays the performance metrics of a campaign, "Air France Brand & French Destinations," against the aggregated total metrics for all campaigns run by the publisher 'Google - Global'. This particular campaign stands out as the best to concentrate on due to its higher Key Performance Indicators (KPIs) in comparison to the total average. For instance, the average amount per booking is higher for the specific campaign at 297.48 compared to the overall total of 205.98. Additionally, the average impressions for the "Air France Brand & French Destinations" campaign are fewer than the total, but the average click-through rate is significantly higher at 12.60% compared to the total average of 9.01%. The conversion rate, while slightly higher for the specific campaign at 0.45%, reinforces the campaign's effectiveness. Moreover, the average cost per click is slightly higher for this campaign, which could indicate more targeted or valuable clicks, corresponding with the other high-performing metrics. This suggests that focusing on the "Air France Brand & French Destinations" campaign could potentially yield better returns on investment for this Google Global publisher.
+
+```{r}
+# Output12: 2.1 Average of KPIs for campaign 'Air France Brand & French Destinations' in 'Google Global' data
+
+Publisher_Name <- "Google - Global"
+Campaign_name <- "Air France Brand & French Destinations"
+
+
+# Filter rows where Publisher_Name is 'Google - Global'
+Publisher_data <- data %>%
+  filter(`Publisher Name` == Publisher_Name)
+
+# Calculate the average value of the 5 KPI columns in the data where Publisher_Name is 'Google - Global'
+averages <- Publisher_data %>%
+  group_by(`Publisher Name`) %>%
+  summarise(
+    `Average of Amount per booking` = round(mean(`Amount per booking`, na.rm = TRUE),3),
+    `Average of Impressions` = round(mean(`Impressions`, na.rm = TRUE),3),
+    `Average of Engine Click Thru %` = round(mean(`Engine Click Thru %`, na.rm = TRUE),3),
+    `Average of Trans. Conv. %` = mean(`Trans. Conv. %`, na.rm = TRUE),
+    `Average of Avg. Cost per Click` = round(mean(`Avg. Cost per Click`, na.rm = TRUE),3)
+  )
+
+averages <- averages %>%
+  rename(`Campaign` = `Publisher Name`)
+averages$Campaign[1] <- "Total"
+
+# Filter rows where Publisher_Name is 'Google - Global' and Campaign_name is "Air France Brand & French Destinations
+filtered_data <- data %>%
+  filter(`Publisher Name` == Publisher_Name, 
+         Campaign == Campaign_name)
+
+# Calculate the average value of the 5 KPI columns where Publisher_Name is 'Google - Global' and Campaign_name is "Air France Brand & French Destinations
+summary_data <- filtered_data %>%
+  group_by(Campaign) %>%
+  summarise(
+    `Average of Amount per booking` = round(mean(`Amount per booking`, na.rm = TRUE),3),
+    `Average of Impressions` = round(mean(`Impressions`, na.rm = TRUE),3),
+    `Average of Engine Click Thru %` = round(mean(`Engine Click Thru %`, na.rm = TRUE),3),
+    `Average of Trans. Conv. %` = mean(`Trans. Conv. %`, na.rm = TRUE),
+    `Average of Avg. Cost per Click` = round(mean(`Avg. Cost per Click`, na.rm = TRUE),3)
+  )
+
+# Concatenating 2 datasets
+final_data <- rbind(summary_data, averages)
+
+# Changing columns names
+final_data <- final_data %>%
+  rename(
+    `Avg. Amount per booking` = `Average of Amount per booking`,
+    `Avg. Impressions` = `Average of Impressions`,
+    `Avg. Click Thru %` = `Average of Engine Click Thru %`,
+    `Avg. Conv. %` = `Average of Trans. Conv. %`,
+    `Avg. Cost per Click` = `Average of Avg. Cost per Click`
+  )
+
+# Adding 'Publisher Name' column
+final_data <- final_data %>%
+  mutate(`Publisher Name` = Publisher_Name) %>%
+  select(`Publisher Name`, everything())
+
+# Display the table "Average of KPIs for campaign 'Air France Brand & French Destinations' in 'Google Global' data"
+print(final_data)
+
+```
+
+#### 2.2 Average of KPIs for campaign 'Air France Branded' in 'Google US' data
+
+The table outlines the performance metrics for the "Air France Branded" campaign compared to the overall performance metrics for all campaigns run by 'Google - US'. The "Air France Branded" campaign is distinguished by its significantly higher average amount per booking, which is \$754.93, a stark contrast to the total average of just \$54.59. Impressions for the campaign are also higher, averaging 24,010.56 compared to the total average of 1,762.19. Furthermore, the campaign's click-through rate is an impressive 16.03%, slightly higher than the total average of 15.16%. Conversion rates are significantly higher for the "Air France Branded" campaign at 2.56% compared to the total's 0.34%. Lastly, the average cost per click for the campaign is lower at \$0.93, which is favorable when compared to the much higher total average cost of \$2.39. These metrics strongly suggest that the "Air France Branded" campaign is performing exceptionally well and could be a strategic focus for the publisher to maximize returns.
+
+```{r}
+# Output13: 2.2 Average of KPIs for campaign 'Air France Branded' in 'Google - US' data
+
+Publisher_Name <- "Google - US"
+Campaign_name <- "Air France Branded"
+
+
+# Filter rows where Publisher_Name is 'Google - US'
+Publisher_data <- data %>%
+  filter(`Publisher Name` == Publisher_Name)
+
+# Calculate the average value of the 5 KPI columns in the data where Publisher_Name is 'Google - US'
+averages <- Publisher_data %>%
+  group_by(`Publisher Name`) %>%
+  summarise(
+    `Average of Amount per booking` = round(mean(`Amount per booking`, na.rm = TRUE),3),
+    `Average of Impressions` = round(mean(`Impressions`, na.rm = TRUE),3),
+    `Average of Engine Click Thru %` = round(mean(`Engine Click Thru %`, na.rm = TRUE),3),
+    `Average of Trans. Conv. %` = mean(`Trans. Conv. %`, na.rm = TRUE),
+    `Average of Avg. Cost per Click` = round(mean(`Avg. Cost per Click`, na.rm = TRUE),3)
+  )
+
+averages <- averages %>%
+  rename(`Campaign` = `Publisher Name`)
+averages$Campaign[1] <- "Total"
+
+# Filter rows where Publisher_Name is 'Google - US' and Campaign_name is "Air France Branded"
+filtered_data <- data %>%
+  filter(`Publisher Name` == Publisher_Name, 
+         Campaign == Campaign_name)
+
+# Calculate the average value of the 5 KPI columns where Publisher_Name is 'Google - US' and Campaign_name is "Air France Branded"
+summary_data <- filtered_data %>%
+  group_by(Campaign) %>%
+  summarise(
+    `Average of Amount per booking` = round(mean(`Amount per booking`, na.rm = TRUE),3),
+    `Average of Impressions` = round(mean(`Impressions`, na.rm = TRUE),3),
+    `Average of Engine Click Thru %` = round(mean(`Engine Click Thru %`, na.rm = TRUE),3),
+    `Average of Trans. Conv. %` = mean(`Trans. Conv. %`, na.rm = TRUE),
+    `Average of Avg. Cost per Click` = round(mean(`Avg. Cost per Click`, na.rm = TRUE),3)
+  )
+
+# Concatenating 2 datasets
+final_data <- rbind(summary_data, averages)
+
+# Changing columns names
+final_data <- final_data %>%
+  rename(
+    `Avg. Amount per booking` = `Average of Amount per booking`,
+    `Avg. Impressions` = `Average of Impressions`,
+    `Avg. Click Thru %` = `Average of Engine Click Thru %`,
+    `Avg. Conv. %` = `Average of Trans. Conv. %`,
+    `Avg. Cost per Click` = `Average of Avg. Cost per Click`
+  )
+
+# Adding 'Publisher Name' column
+final_data <- final_data %>%
+  mutate(`Publisher Name` = Publisher_Name) %>%
+  select(`Publisher Name`, everything())
+
+# Display the table "Average of KPIs for campaign 'Air France Branded' in 'Google - US"
+print(final_data)
+
+```
+
+#### 2.3 Average of KPIs for campaign 'Air France Brand & French Destinations' in 'MSN - US' data
+
+The table contains performance metrics for the "Air France Brand & French Destinations" campaign as compared to the aggregate performance of all campaigns under 'MSN - US'. The "Air France Brand & French Destinations" campaign shows a higher average amount per booking at \$92.05 compared to the overall total of \$88.21. Impressions for this specific campaign are slightly higher, with an average of 1789.97, against a total average of 1769.47. The click-through rate for the campaign is lower at 7.35% versus the total average of 8.09%. However, the average conversion rate for the campaign is slightly higher at 0.78% compared to the total's 0.75%. The average cost per click for the campaign is \$2.74, marginally lower than the total average of \$2.82. These figures suggest that while the campaign's click-through rate is lower, its efficiency in conversion and marginally better cost-per-click indicate a solid performance, which could warrant continued investment and optimization (Khan, 2024).
+
+```{r}
+# Output14: 2.3 Average of KPIs for campaign 'Air France Brand & French Destinations' in 'MSN - US' data
+
+Publisher_Name <- "MSN - US"
+Campaign_name <- "Air France Brand & French Destinations"
+
+
+# Filter rows where Publisher_Name is 'MSN - US'
+Publisher_data <- data %>%
+  filter(`Publisher Name` == Publisher_Name)
+
+# Calculate the average value of the 5 KPI columns in the data where Publisher_Name is 'MSN - US'
+averages <- Publisher_data %>%
+  group_by(`Publisher Name`) %>%
+  summarise(
+    `Average of Amount per booking` = round(mean(`Amount per booking`, na.rm = TRUE),3),
+    `Average of Impressions` = round(mean(`Impressions`, na.rm = TRUE),3),
+    `Average of Engine Click Thru %` = round(mean(`Engine Click Thru %`, na.rm = TRUE),3),
+    `Average of Trans. Conv. %` = mean(`Trans. Conv. %`, na.rm = TRUE),
+    `Average of Avg. Cost per Click` = round(mean(`Avg. Cost per Click`, na.rm = TRUE),3)
+  )
+
+averages <- averages %>%
+  rename(`Campaign` = `Publisher Name`)
+averages$Campaign[1] <- "Total"
+
+# Filter rows where Publisher_Name is 'MSN - US' and Campaign_name is "Air France Brand & French Destinations"
+filtered_data <- data %>%
+  filter(`Publisher Name` == Publisher_Name, 
+         Campaign == Campaign_name)
+
+# Calculate the average value of the 5 KPI columns where Publisher_Name is 'MSN - US' and Campaign_name is "Air France Brand & French Destinations"
+summary_data <- filtered_data %>%
+  group_by(Campaign) %>%
+  summarise(
+    `Average of Amount per booking` = round(mean(`Amount per booking`, na.rm = TRUE),3),
+    `Average of Impressions` = round(mean(`Impressions`, na.rm = TRUE),3),
+    `Average of Engine Click Thru %` = round(mean(`Engine Click Thru %`, na.rm = TRUE),3),
+    `Average of Trans. Conv. %` = mean(`Trans. Conv. %`, na.rm = TRUE),
+    `Average of Avg. Cost per Click` = round(mean(`Avg. Cost per Click`, na.rm = TRUE),3)
+  )
+
+# Concatenating 2 datasets
+final_data <- rbind(summary_data, averages)
+
+# Changing columns names
+final_data <- final_data %>%
+  rename(
+    `Avg. Amount per booking` = `Average of Amount per booking`,
+    `Avg. Impressions` = `Average of Impressions`,
+    `Avg. Click Thru %` = `Average of Engine Click Thru %`,
+    `Avg. Conv. %` = `Average of Trans. Conv. %`,
+    `Avg. Cost per Click` = `Average of Avg. Cost per Click`
+  )
+
+# Adding 'Publisher Name' column
+final_data <- final_data %>%
+  mutate(`Publisher Name` = Publisher_Name) %>%
+  select(`Publisher Name`, everything())
+
+# Display the table "Average of KPIs for campaign 'Air France Brand & French Destinations' in 'MSN - US"
+print(final_data)
+
+```
+
+#### 2.4 Average of KPIs for campaign 'Paris & France Terms' in 'Yahoo - US' data
+
+The table is about comparing the performance of the "Paris & France Terms" campaign with the aggregate metrics of all campaigns under 'Yahoo - US'. The "Paris & France Terms" campaign boasts a substantially higher average booking amount of \$217.13 compared to the overall total of \$61.91. In terms of impressions, the campaign received 2831.69 on average, nearly double the total average of 1487.48. However, the campaign's click-through rate is lower at 5.86% when compared to the total average of 16.08%. The conversion rate for "Paris & France Terms" is 0.78%, which is less than half of the total average conversion rate of 1.84%. Moreover, the average cost per click for the campaign is slightly cheaper at \$1.47, compared to the total average cost of \$1.99. While the average booking amount for the "Paris & France Terms" campaign is quite high, the lower click-through and conversion rates suggest there may be room for optimization to align it more closely with the success seen in other metrics.
+
+```{r}
+# Output15: 2.4 Average of KPIs for campaign 'Paris & France Terms' in 'Yahoo - US' data
+
+Publisher_Name <- "Yahoo - US"
+Campaign_name <- "Paris & France Terms"
+
+
+# Filter rows where Publisher_Name is 'Yahoo - US'
+Publisher_data <- data %>%
+  filter(`Publisher Name` == Publisher_Name)
+
+# Calculate the average value of the 5 KPI columns in the data where Publisher_Name is 'Yahoo - US'
+averages <- Publisher_data %>%
+  group_by(`Publisher Name`) %>%
+  summarise(
+    `Average of Amount per booking` = round(mean(`Amount per booking`, na.rm = TRUE),3),
+    `Average of Impressions` = round(mean(`Impressions`, na.rm = TRUE),3),
+    `Average of Engine Click Thru %` = round(mean(`Engine Click Thru %`, na.rm = TRUE),3),
+    `Average of Trans. Conv. %` = mean(`Trans. Conv. %`, na.rm = TRUE),
+    `Average of Avg. Cost per Click` = round(mean(`Avg. Cost per Click`, na.rm = TRUE),3)
+  )
+
+averages <- averages %>%
+  rename(`Campaign` = `Publisher Name`)
+averages$Campaign[1] <- "Total"
+
+# Filter rows where Publisher_Name is 'Yahoo - US' and Campaign_name is "Paris & France Terms"
+filtered_data <- data %>%
+  filter(`Publisher Name` == Publisher_Name, 
+         Campaign == Campaign_name)
+
+# Calculate the average value of the 5 KPI columns where Publisher_Name is 'Yahoo - US' and Campaign_name is "Paris & France Terms"
+summary_data <- filtered_data %>%
+  group_by(Campaign) %>%
+  summarise(
+    `Average of Amount per booking` = round(mean(`Amount per booking`, na.rm = TRUE),3),
+    `Average of Impressions` = round(mean(`Impressions`, na.rm = TRUE),3),
+    `Average of Engine Click Thru %` = round(mean(`Engine Click Thru %`, na.rm = TRUE),3),
+    `Average of Trans. Conv. %` = mean(`Trans. Conv. %`, na.rm = TRUE),
+    `Average of Avg. Cost per Click` = round(mean(`Avg. Cost per Click`, na.rm = TRUE),3)
+  )
+
+# Concatenating 2 datasets
+final_data <- rbind(summary_data, averages)
+
+# Changing columns names
+final_data <- final_data %>%
+  rename(
+    `Avg. Amount per booking` = `Average of Amount per booking`,
+    `Avg. Impressions` = `Average of Impressions`,
+    `Avg. Click Thru %` = `Average of Engine Click Thru %`,
+    `Avg. Conv. %` = `Average of Trans. Conv. %`,
+    `Avg. Cost per Click` = `Average of Avg. Cost per Click`
+  )
+
+# Adding 'Publisher Name' column
+final_data <- final_data %>%
+  mutate(`Publisher Name` = Publisher_Name) %>%
+  select(`Publisher Name`, everything())
+
+# Display the table "Average of KPIs for campaign 'Paris & France Terms' in 'Yahoo - US"
+print(final_data)
+
+```
+
+### Insights 3: The Keyword strategy by publisher and campaign ===================
+
+Understanding and implementing the right keyword strategy is pivotal in digital marketing for several reasons. Keywords form the foundation of SEM as they help search engines understand and rank the content of your website, leading to increased visibility and traffic. The strategic use of keywords in digital marketing allows for targeting a specific audience, improving user experience, and ultimately, enhancing conversion rates (TC the Cognent, 2023).
+
+Note: "MSN - Global is not included to this insight since only one campaign is available.
+
+#### 3.1 Average of KPIs by Keywords for campaign 'Air France Brand & French Destinations' in 'Google - Global
+
+From the analysis of Insights 1 and 2, it has become clear that the key indicator for the 'Air France Brand & French Destinations' campaign on 'Google Global' is 'Average Amount per booking'.
+
+**The keyword '[air france]' and 'air france deal'**: '[air france]' has demonstrated excellent performance with an Average Amount per Booking of \$1,145, 44,023 impressions, and a CTR of 33.42%, and has been assessed with a low CPC of \$1.04. Despite currently being inactive (status unavailable), a recommencement is recommended based on its performance. For performance improvement, optimization of ad copy and landing pages, consideration of keyword variations, and bid adjustments are beneficial (Lamar, 2023).
+
+In contrast, 'air france deal' has shown low performance with an Average Amount per Booking and a CVR of 0.00, and a CPC of \$2.11. This keyword is a candidate for optimization or temporary suspension, and adjustments to ad copy, landing page, and match type are necessary to improve the low conversion rate. If performance does not improve, removal from the campaign and reallocation of budget may be considered (Web FEX, n.d.).
+
+**The keyword 'air france site' and 'airfrance site'**: The 'air france site' keyword has the highest Average Amount per Booking at \$2,348, with a high CVR of 5.26%, while also having a low CPC of \$0.43, and its reactivation is also recommended (Lamar, 2023). The 'airfrance site' keyword, with a lower Average Amount per Booking, a CVR of 0.00%, and insufficient impressions of 12, should be paused or removed, and the budget should be wisely reallocated to more effective keywords (Web FEX, n.d.).
+
+The main difference between the two keywords is the presence or absence of a space, and adjusting 'airfrance site' to an exact match is expected to improve relevance and conversion rates, as well as reduce wasted ad spend (WordStream, 2017).
+
+```{r}
+# Output16: 3.1 Average of KPIs by Keywords for campaign 'Air France Brand & French Destinations' in 'Google - Global
+
+Publisher_Name <- "Google - Global"
+Campaign_name <- "Air France Brand & French Destinations"
+Keyword_best <- "[air france]"
+keyword_better <- "air france site"
+keyword_worse <- "air france deal"
+keyword_worst <- "airfrance site"
+
+
+# Filter rows where Publisher_Name is 'Google - Global' and Campaign_name is "Air France Brand & French
+Publisher_campaign_data <- data %>%
+  filter(`Publisher Name` == Publisher_Name, `Campaign` == Campaign_name)
+
+
+# Calculate the average value of the 5 KPI columns in the data where Publisher_Name is 'Google - Global' and Campaign_name is "Air France Brand & French Destinations"
+averages <- Publisher_campaign_data %>%
+  group_by(`Campaign`) %>%
+  summarise(
+    `Average of Amount per booking` = round(mean(`Amount per booking`, na.rm = TRUE),3),
+    `Average of Impressions` = round(mean(`Impressions`, na.rm = TRUE),3),
+    `Average of Engine Click Thru %` = round(mean(`Engine Click Thru %`, na.rm = TRUE),3),
+    `Average of Trans. Conv. %` = mean(`Trans. Conv. %`, na.rm = TRUE),
+    `Average of Avg. Cost per Click` = round(mean(`Avg. Cost per Click`, na.rm = TRUE),3)
+  )
+
+averages <- averages %>%
+  rename(`Keyword` = `Campaign`)
+averages$Keyword[1] <- "Total"
+
+
+# Filter rows where Publisher_Name is 'Google - Global' and Campaign_name is "Air France Brand & French Destinations"
+filtered_data <- data %>%
+  filter(`Publisher Name` == Publisher_Name, Campaign == Campaign_name)
+
+# Calculate the average value of the 5 KPI columns where Publisher_Name is 'Google - Global' and Campaign_name is "Air France Brand & French Destinations"
+summary_data <- filtered_data %>%
+  group_by(Keyword) %>%
+  summarise(
+    `Average of Amount per booking` = round(mean(`Amount per booking`, na.rm = TRUE),3),
+    `Average of Impressions` = round(mean(`Impressions`, na.rm = TRUE),3),
+    `Average of Engine Click Thru %` = round(mean(`Engine Click Thru %`, na.rm = TRUE),3),
+    `Average of Trans. Conv. %` = mean(`Trans. Conv. %`, na.rm = TRUE),
+    `Average of Avg. Cost per Click` = round(mean(`Avg. Cost per Click`, na.rm = TRUE),3)
+  )
+
+# Get only the rows for the keywords we want to display
+summary_data <- summary_data %>%
+  filter(Keyword == Keyword_best | Keyword == keyword_better | Keyword == keyword_worse | Keyword == keyword_worst)
+
+
+# Concatenating 2 datasets
+final_data <- rbind(summary_data, averages)
+
+# Changing columns names
+final_data <- final_data %>%
+  rename(
+    `Avg. Amount per booking` = `Average of Amount per booking`,
+    `Avg. Impressions` = `Average of Impressions`,
+    `Avg. Click Thru %` = `Average of Engine Click Thru %`,
+    `Avg. Conv. %` = `Average of Trans. Conv. %`,
+    `Avg. Cost per Click` = `Average of Avg. Cost per Click`
+  )
+
+
+# Adding  columns of 'Publisher Name', 'Campaign', and 'Match type'
+final_data <- final_data %>%
+  mutate(`Match type` = c("Exact","broad","broad","broad","")) %>%
+  select(`Match type`, everything()) %>%
+  mutate(`Campaign` = Campaign_name) %>%
+  select(`Campaign`, everything()) %>%
+  mutate(`Publisher Name` = Publisher_Name) %>%
+  select(`Publisher Name`, everything())
+
+# Display the table "Average of KPIs by Keywords for campaign 'Air France Brand & French Destinations' in 'Google - Global"
+print(final_data)
+
+```
+
+#### 3.2 Average of KPIs by Keywords for campaign 'Air France Branded' in 'Google - US
+
+"Average Engine Click Through (%)" is chosen as a primary focus metric when analyzing the keyword for this campaign.
+
+**The keyword 'air france airlines'**: This has the highest CTR (22.05%). Additionally, the Average of Amount per booking (\$1,114) and the Average of Impressions (11,128) are also extremely high. This indicates that 'air france airlines' resonates with users and is acquiring high-revenue conversions. Targeting similar high-intent keywords could be beneficial. Possible keywords to consider include 'air france flights', 'air france ticket booking', 'air france reservations', and so on .
+
+**The keyword 'air france ca'**: This is a low-performance keyword, with a CVR and Average of Amount per booking of 0.00. Moreover, the CPC is high at \$1.55, surpassing the overall average. Despite the investment, it signifies that it is not leading to bookings. Given the poor performance, consideration should be given to removing this keyword and reallocating the budget to other high-performing keywords.
+
+**The keyword 'air france com'**: This quitely surpasses the the other two keywords in all KPIs except CPC. One of the causes of this was that the bid strategy for this keyword, which is "Position 1-4 Bid Strategy," is higher compared to the other two keywords, which are "Position 2-5 Bid Strategy". Additionally, the CPC is low at \$0.31. However, since the status is "Deactivate", the first step should be to reactivate it. There is also an opportunity to slightly increase the bid to secure or enhance the ad position without significantly raising the overall cost (WordStream, n.d.).
+
+**The keyword 'airfrance deals'**: With a CVR and Average of Amount per booking of 0.00, and impressions of 57 significantly below the overall average, it is necessary to investigate the reasons for the low CVR.
+
+```{r}
+# Output17: 3.2 Average of KPIs by Keywords for campaign 'Air France Branded' in 'Google - US
+
+Publisher_Name <- "Google - US"
+Campaign_name <- "Air France Branded"
+Keyword_best <- "air france airlines"
+keyword_better <- "air france com"
+keyword_worse <- "airfrance deals"
+keyword_worst <- "air france ca"
+
+
+# Filter rows where Publisher_Name is 'Google - US' and Campaign_name is "Air France Branded
+Publisher_campaign_data <- data %>%
+  filter(`Publisher Name` == Publisher_Name, `Campaign` == Campaign_name)
+
+# Calculate the average value of the 5 KPI columns in the data where Publisher_Name is 'Google - US' and Campaign_name is "Air France Branded"
+averages <- Publisher_campaign_data %>%
+  group_by(`Campaign`) %>%
+  summarise(
+    `Average of Amount per booking` = round(mean(`Amount per booking`, na.rm = TRUE),3),
+    `Average of Impressions` = round(mean(`Impressions`, na.rm = TRUE),3),
+    `Average of Engine Click Thru %` = round(mean(`Engine Click Thru %`, na.rm = TRUE),3),
+    `Average of Trans. Conv. %` = mean(`Trans. Conv. %`, na.rm = TRUE),
+    `Average of Avg. Cost per Click` = round(mean(`Avg. Cost per Click`, na.rm = TRUE),3)
+  )
+
+averages <- averages %>%
+  rename(`Keyword` = `Campaign`)
+averages$Keyword[1] <- "Total"
+
+
+# Filter rows where Publisher_Name is 'Google - US' and Campaign_name is "Air France Branded"
+filtered_data <- data %>%
+  filter(`Publisher Name` == Publisher_Name, Campaign == Campaign_name)
+
+# Calculate the average value of the 5 KPI columns where Publisher_Name is 'Google - US' and Campaign_name is "Air France Branded"
+summary_data <- filtered_data %>%
+  group_by(Keyword) %>%
+  summarise(
+    `Average of Amount per booking` = round(mean(`Amount per booking`, na.rm = TRUE),3),
+    `Average of Impressions` = round(mean(`Impressions`, na.rm = TRUE),3),
+    `Average of Engine Click Thru %` = round(mean(`Engine Click Thru %`, na.rm = TRUE),3),
+    `Average of Trans. Conv. %` = mean(`Trans. Conv. %`, na.rm = TRUE),
+    `Average of Avg. Cost per Click` = round(mean(`Avg. Cost per Click`, na.rm = TRUE),3)
+  )
+
+# Get only the rows for the keywords we want to display
+summary_data <- summary_data %>%
+  filter(Keyword == Keyword_best | Keyword == keyword_better | Keyword == keyword_worse | Keyword == keyword_worst)
+
+
+# Concatenating 2 datasets
+final_data <- rbind(summary_data, averages)
+
+# Changing columns names
+final_data <- final_data %>%
+  rename(
+    `Avg. Amount per booking` = `Average of Amount per booking`,
+    `Avg. Impressions` = `Average of Impressions`,
+    `Avg. Click Thru %` = `Average of Engine Click Thru %`,
+    `Avg. Conv. %` = `Average of Trans. Conv. %`,
+    `Avg. Cost per Click` = `Average of Avg. Cost per Click`
+  )
+
+
+# Adding  columns of 'Publisher Name', 'Campaign', and 'Match type'
+final_data <- final_data %>%
+  mutate(`Match type` = c("broad","broad","broad","broad","")) %>%
+  select(`Match type`, everything()) %>%
+  mutate(`Campaign` = Campaign_name) %>%
+  select(`Campaign`, everything()) %>%
+  mutate(`Publisher Name` = Publisher_Name) %>%
+  select(`Publisher Name`, everything())
+
+# Display the table "Average of KPIs by Keywords for campaign 'Air France Branded' in 'Google - US"
+print(final_data)
+
+```
+
+#### 3.3 Average of KPIs by Keywords for campaign 'Air France Brand & French Destinations' in 'MSN - US
+
+The primary metric for the campaign 'Air France Brand & French Destinations' on 'MSN - US' has been identified as 'Average Transaction Conversion (%)'.
+
+**The keyword 'air france airlines' and 'airfrance tickets'**: Within the 'Air France Brand' Keyword group, 'air france airlines' is a high-performance keyword with a Conversion Rate (CVR) of 2.56% and the highest Click-Through Rate (CTR) at 19.96%, while the Cost Per Click (CPC) is below the overall average at \$0.69. There is potential to convert the high click rate into bookings through optimization of the landing page. 'airfrance tickets' is considered a low-performance keyword due to its CVR and Average of Amount per booking being 0.00 and a high CPC at \$1.65, leading to considerations for a temporary suspension and reallocation of the budget.
+
+**The keyword 'air france com' and 'flight to paris'**: In the 'Air France Website' Keyword group, 'air france com' demonstrates high performance with a CVR of 1.6% and a CPC of \$0.64, which is below the overall average, contributing to high traffic and profitable conversions. 'flight to paris' is identified as a low-performance keyword due to its CVR of 0.00% and a very high CPC of \$2.51, resulting in considerations for a temporary suspension and budget reallocation as well.
+
+```{r}
+# Output18: 3.3 Average of KPIs by Keywords for campaign 'Air France Brand & French Destinations' in 'MSN - US
+
+Publisher_Name <- "MSN - US"
+Campaign_name <- "Air France Brand & French Destinations"
+Keyword_best <- "air france airlines"
+keyword_better <- "airfrance com"
+keyword_worse <- "airfrance tickets"
+keyword_worst <- "flight to paris"
+
+
+# Filter rows where Publisher_Name is 'MSN - US' and Campaign_name is "Air France Brand & French Destinations
+Publisher_campaign_data <- data %>%
+  filter(`Publisher Name` == Publisher_Name, `Campaign` == Campaign_name)
+
+# Calculate the average value of the 5 KPI columns in the data where Publisher_Name is 'MSN - US' and Campaign_name is "Air France Brand & French Destinations"
+averages <- Publisher_campaign_data %>%
+  group_by(`Campaign`) %>%
+  summarise(
+    `Average of Amount per booking` = round(mean(`Amount per booking`, na.rm = TRUE),3),
+    `Average of Impressions` = round(mean(`Impressions`, na.rm = TRUE),3),
+    `Average of Engine Click Thru %` = round(mean(`Engine Click Thru %`, na.rm = TRUE),3),
+    `Average of Trans. Conv. %` = mean(`Trans. Conv. %`, na.rm = TRUE),
+    `Average of Avg. Cost per Click` = round(mean(`Avg. Cost per Click`, na.rm = TRUE),3)
+  )
+
+averages <- averages %>%
+  rename(`Keyword` = `Campaign`)
+averages$Keyword[1] <- "Total"
+
+
+# Filter rows where Publisher_Name is 'MSN - US' and Campaign_name is "Air France Brand & French Destinations"
+filtered_data <- data %>%
+  filter(`Publisher Name` == Publisher_Name, Campaign == Campaign_name)
+
+# Calculate the average value of the 5 KPI columns where Publisher_Name is 'MSN - US' and Campaign_name is "Air France Brand & French Destinations"
+summary_data <- filtered_data %>%
+  group_by(Keyword) %>%
+  summarise(
+    `Average of Amount per booking` = round(mean(`Amount per booking`, na.rm = TRUE),3),
+    `Average of Impressions` = round(mean(`Impressions`, na.rm = TRUE),3),
+    `Average of Engine Click Thru %` = round(mean(`Engine Click Thru %`, na.rm = TRUE),3),
+    `Average of Trans. Conv. %` = mean(`Trans. Conv. %`, na.rm = TRUE),
+    `Average of Avg. Cost per Click` = round(mean(`Avg. Cost per Click`, na.rm = TRUE),3)
+  )
+
+# Get only the rows for the keywords we want to display
+summary_data <- summary_data %>%
+  filter(Keyword == Keyword_best | Keyword == keyword_better | Keyword == keyword_worse | Keyword == keyword_worst)
+
+
+# Concatenating 2 datasets
+final_data <- rbind(summary_data, averages)
+
+# Changing columns names
+final_data <- final_data %>%
+  rename(
+    `Avg. Amount per booking` = `Average of Amount per booking`,
+    `Avg. Impressions` = `Average of Impressions`,
+    `Avg. Click Thru %` = `Average of Engine Click Thru %`,
+    `Avg. Conv. %` = `Average of Trans. Conv. %`,
+    `Avg. Cost per Click` = `Average of Avg. Cost per Click`
+  )
+
+
+# Adding  columns of 'Publisher Name', 'Campaign', and 'Match type'
+final_data <- final_data %>%
+  mutate(`Match type` = c("broad","broad","broad","broad","")) %>%
+  select(`Match type`, everything()) %>%
+  mutate(`Campaign` = Campaign_name) %>%
+  select(`Campaign`, everything()) %>%
+  mutate(`Publisher Name` = Publisher_Name) %>%
+  select(`Publisher Name`, everything())
+
+# Display the table "Average of KPIs by Keywords for campaign 'Air France Brand & French Destinations' in 'MSN - US"
+print(final_data)
+
+```
+
+#### 3.4 Average of KPIs by Keywords for campaign 'Paris & France Terms' in 'Yahoo - US
+
+it has become clear that the main metric for the 'Paris & France Terms' campaign on 'Yahoo - US' is 'Average Transaction Conversion (%)'.
+
+**The keyword 'france travel agency' and 'france travel information'**: For the 'France' keyword group, 'france travel agency' has an exceptionally high Conversion Rate (CVR) of 40.0%, and it excels in other Key Performance Indicators (KPIs) as well. There is a need to optimize the landing page to further utilize this traffic. However, 'france travel information' has a CVR of 0.00% and a very high Cost Per Click (CPC) of \$5.58, which necessitates consideration for a temporary suspension and reallocation of the budget.
+
+**The keyword 'fly to paris' and 'paris france tourism'**: In the 'Paris' keyword group, 'fly to paris' is showing good performance with a CVR of 2.27% and a CPC of \$1.14. It is desirable to maintain this performance through bid adjustments for the ads. 'paris france tourism' has a CVR of 0.00% and a high CPC of \$2.68, thus a temporary suspension or removal and reallocation of the budget to more effective keywords is being considered.
+
+```{r}
+# Output19: 3.4 Average of KPIs by Keywords for campaign 'Paris & France Terms' in 'Yahoo - US
+
+Publisher_Name <- "Yahoo - US"
+Campaign_name <- "Paris & France Terms"
+Keyword_best <- "france travel agency"
+keyword_better <- "fly to paris"
+keyword_worse <- "france travel information"
+keyword_worst <- "paris france tourism"
+
+
+# Filter rows where Publisher_Name is 'Yahoo - US' and Campaign_name is "Paris & France Terms
+Publisher_campaign_data <- data %>%
+  filter(`Publisher Name` == Publisher_Name, `Campaign` == Campaign_name)
+
+# Calculate the average value of the 5 KPI columns in the data where Publisher_Name is 'Yahoo - US' and Campaign_name is "Paris & France Terms"
+averages <- Publisher_campaign_data %>%
+  group_by(`Campaign`) %>%
+  summarise(
+    `Average of Amount per booking` = round(mean(`Amount per booking`, na.rm = TRUE),3),
+    `Average of Impressions` = round(mean(`Impressions`, na.rm = TRUE),3),
+    `Average of Engine Click Thru %` = round(mean(`Engine Click Thru %`, na.rm = TRUE),3),
+    `Average of Trans. Conv. %` = mean(`Trans. Conv. %`, na.rm = TRUE),
+    `Average of Avg. Cost per Click` = round(mean(`Avg. Cost per Click`, na.rm = TRUE),3)
+  )
+
+averages <- averages %>%
+  rename(`Keyword` = `Campaign`)
+averages$Keyword[1] <- "Total"
+
+
+# Filter rows where Publisher_Name is 'Yahoo - US' and Campaign_name is "Paris & France Terms"
+filtered_data <- data %>%
+  filter(`Publisher Name` == Publisher_Name, Campaign == Campaign_name)
+
+# Calculate the average value of the 5 KPI columns where Publisher_Name is 'Yahoo - US' and Campaign_name is "Paris & France Terms"
+summary_data <- filtered_data %>%
+  group_by(Keyword) %>%
+  summarise(
+    `Average of Amount per booking` = round(mean(`Amount per booking`, na.rm = TRUE),3),
+    `Average of Impressions` = round(mean(`Impressions`, na.rm = TRUE),3),
+    `Average of Engine Click Thru %` = round(mean(`Engine Click Thru %`, na.rm = TRUE),3),
+    `Average of Trans. Conv. %` = mean(`Trans. Conv. %`, na.rm = TRUE),
+    `Average of Avg. Cost per Click` = round(mean(`Avg. Cost per Click`, na.rm = TRUE),3)
+  )
+
+# Get only the rows for the keywords we want to display
+summary_data <- summary_data %>%
+  filter(Keyword == Keyword_best | Keyword == keyword_better | Keyword == keyword_worse | Keyword == keyword_worst)
+
+
+# Concatenating 2 datasets
+final_data <- rbind(summary_data, averages)
+
+# Changing columns names
+final_data <- final_data %>%
+  rename(
+    `Avg. Amount per booking` = `Average of Amount per booking`,
+    `Avg. Impressions` = `Average of Impressions`,
+    `Avg. Click Thru %` = `Average of Engine Click Thru %`,
+    `Avg. Conv. %` = `Average of Trans. Conv. %`,
+    `Avg. Cost per Click` = `Average of Avg. Cost per Click`
+  )
+
+
+# Adding  columns of 'Publisher Name', 'Campaign', and 'Match type'
+final_data <- final_data %>%
+  mutate(`Match type` = c("Standard","Standard","Standard","Standard","")) %>%
+  select(`Match type`, everything()) %>%
+  mutate(`Campaign` = Campaign_name) %>%
+  select(`Campaign`, everything()) %>%
+  mutate(`Publisher Name` = Publisher_Name) %>%
+  select(`Publisher Name`, everything())
+
+# Display the table "Average of KPIs by Keywords for campaign 'Paris & France Terms' in 'Yahoo - US"
+print(final_data)
+
+```
+
+## 3. Conclusion ===============================================================
+
+Throughout this analysis, three critical insights to optimize Air France's Search Engine Marketing (SEM) strategy have revealed.
+
+Firstly, the importance of identifying the key KPIs to be focused on, which allows Air France to address the problem at hand effectively. These KPIs, including Conversion Rate, Amount per Booking, and Cost per Click, act as a compass guiding the marketing efforts towards areas with the highest potential for return on investment.
+
+Secondly, a tailored strategy for each search engine is crucial.By integrating these focused strategies, Air France is poised to optimize their SEM efforts effectively. The key lies in balancing investments between high-performing traditional publishers and promising metasearch engines, and in doing so, Air France can look forward to a refined, cost-effective, and high-yielding SEM portfolio. Moreover, incorporating metasearch platforms into Air France's SEM strategy could not only enhance ROI but also allow them to reach more people.
+
+Thirdly, the analysis has highlighted the importance of a keyword strategy that enhances the overall value derived from investments in search engine publishers. By implementing these insights, Air France can expect to not only improve the ROI of their SEM campaigns but also to refine their overall digital marketing footprint. The actionable recommendations provided offer a roadmap to achieving more with less, by investing wisely in keywords and campaigns that promise the greatest returns.
+
+## 4. References ===============================================================
+
+Adobe Experience Cloud Team. (2022, November 14). ROI in digital marketing — what it looks like, how to calculate it, and how to maximize it. \<<https://business.adobe.com/blog/basics/understanding-roi-in-digital-marketing#>:\~:text=In%20digital%20marketing%2C%20return%20on,the%20cost%20of%20that%20campaign.
+
+Alam, M. (2023, November 13). Digital Marketing 101: Benefits, Types & How to Start? Mailmodo. <https://www.mailmodo.com/guides/digital-marketing/>
+
+August 23, J. B. on, & Read, 2021 \~ 9 M. to. (2021, August 24). What Is a Digital Marketing Campaign & How Do You Create One? WebFX. <https://www.webfx.com/blog/marketing/what-is-a-digital-marketing-campaign/>
+
+Economist, I. (2023, November 17). Cost Volume Profit Analysis: A Thorough Explanation of Its Significance in Businesses - Inspired Economist. Inspired Economist. <https://inspiredeconomist.com/articles/cost-volume-profit-analysis/>
+
+Keywords in Digital Marketing - Types, Importance & Benefits. (2023, May 30). TC the Cognent. <https://thecogent.in/guide/keywords-in-digital-marketing/>
+
+Khan, F. (2024, January 26). The Ultimate PPC Management Checklist. AgencyAnalytics. <https://agencyanalytics.com/blog/ppc-management-checklist>
+
+Lamar, 3rd +. (2023, October 25). What is CVR in Digital Marketing? 3rd + Lamar. <https://3rdandlamar.com/marketing-essentials/what-is-cvr-in-digital-marketing/>
+
+Marino, S. (2023, November 14). 15 Ways to Lower Your Cost Per Click in Google & Facebook Ads. WordStream. <https://www.wordstream.com/blog/ws/2021/08/17/lower-cost-per-click>
+
+Montgomery, A. L. (2024). Hierarchical Bayes Models for Micro-Marketing Strategies. Cmu.edu. <https://www.stat.cmu.edu/~kass/montgomery/written/writem.html#>:\~:text=A%20uniform%20strategy%20equates%20the
+
+QLIK. (n.d.). What is a Key Performance Indicator (KPI)? Guide & Examples. Qlik. <https://www.qlik.com/us/kpi#>:\~:text=KPIs%20provide%20targets%20for%20teams
+
+OpenAI. (2024). ChatGPT (Version February 2024) [Large language model]. Retrieved from <https://chat.openai.com/>
+
+Web FEX. (n.d.). What is CPC (Cost-Per-Click)? \| Your CPC Marketing Guide. WebFX. <https://www.webfx.com/ppc/glossary/what-is-cpc/>
+
+What Is SEM And Why Is It Necessary For Travel Companies? \| Apollo Digital. (2019, December 22). Apollo Digital – SEO and PPC Specialists. <https://theapolloagency.co.uk/blog/what-is-sem-and-why-is-it-necessary-for-travel/>
+
+WordStream. (n.d.). AdWords Bidding: Draw on Actual Site Data to Optimize Bids. WordStream. <https://www.wordstream.com/adwords-bidding>
+
+WordStream. (2017). Exact Match Keywords - Learn More About the Exact Match Type \| WordStream. Wordstream.com. <https://www.wordstream.com/exact-match>
+
+Zagrodska, A. (2023, May 29). Measuring and Analyzing Campaign Performance for Beginners. Mixdigital.agency. <https://mixdigital.agency/blog/measuring-campaign-performance/>

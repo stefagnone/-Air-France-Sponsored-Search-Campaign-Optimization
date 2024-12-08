@@ -25,8 +25,7 @@ This project demonstrates expertise in data-driven marketing, advanced modeling,
   - `FINAL_SUBMISSION_ELASTIC_MODEL.csv`: Final predictions submitted to Kaggle.
 - `Documents/`:
   - `Team9_Analysis in R-1.html`: Insightful report with visualizations and recommendations.
-  - `BUSINESS_CHALLENGE_III.pdf`: Complete project report summarizing findings.
-
+ 
 ## Key Insights
 - **Budget Allocation**: Google and Kayak campaigns showed the highest ROI, suggesting budget reallocation for better performance.
 - **Cost Efficiency**: The ElasticNet regression model identified key factors affecting CPA (Cost Per Acquisition), enabling cost-effective campaign planning.

@@ -23,23 +23,34 @@ This project demonstrates expertise in data-driven marketing, advanced modeling,
   - `sample_submission.csv`: Initial data sample.
   - `ORIGINAL_VALUES.csv`: Cleaned dataset used for analysis.
   - `FINAL_SUBMISSION_ELASTIC_MODEL.csv`: Final predictions submitted to Kaggle.
+  - `KEL319-PDF-ENG.pdf`: Original campaign data.
 - `Documents/`:
   - `Team9_Analysis in R-1.html`: Insightful report with visualizations and recommendations.
  
 ## Key Insights
-- **Budget Allocation**: Google and Kayak campaigns showed the highest ROI, suggesting budget reallocation for better performance.
-- **Cost Efficiency**: The ElasticNet regression model identified key factors affecting CPA (Cost Per Acquisition), enabling cost-effective campaign planning.
-- **Ad Strategy Optimization**: Results demonstrated that focusing on high-CTR campaigns significantly impacts revenue while reducing costs.
+1. **Actionable Recommendations**:
+   - Adjust keyword strategies to emphasize unbranded terms for broader audience reach.
+   - Tailor campaigns based on specific platform advantages (e.g., demographic targeting on MSN).
+   - Optimize bid strategies dynamically to maximize ROA for low-performing engines like Yahoo.
+   
+2. **Modeling Techniques**:
+   - Comparative performance of Elastic Net, Ridge, and Decision Tree models for revenue prediction.
+   - Feature engineering based on keyword categories and match types.
+   - Hyperparameter tuning for maximizing predictive accuracy.
+
+3. **Visualizations**:
+   - Revenue trends across platforms.
+   - Click-through and conversion rates for branded vs. unbranded keywords.
+   - Platform-wise ROA comparisons to identify strengths and gaps.
 
 These insights provide actionable recommendations for maximizing returns from sponsored search campaigns.
 
 ## Instructions
-1. Clone this repository.
-2. Open `ASSIGNMENT_TEAM_9.ipynb` in Jupyter or any compatible Python environment.
-3. Install required libraries (`scikit-learn`, `pandas`, `matplotlib`).
-4. Run the notebook to explore the analysis and model development steps.
-5. Review insights in `Team9_Analysis in R-1.html` for detailed analysis in R.
-6. Examine `FINAL_SUBMISSION_ELASTIC_MODEL.csv` for final predictions submitted to Kaggle.
+### Requirements
+- Python 3.8+
+- R 4.0+
+- Required Python packages: `pandas`, `scikit-learn`, `matplotlib`
+- R packages: `ggplot2`, `dplyr
 
 ## Contact
 Connect with me on [LinkedIn](https://www.linkedin.com/in/stefano-compagnone98/) for more information or explore my other projects on GitHub.
